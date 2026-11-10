@@ -16,16 +16,16 @@
 
 ### Immutable
 
-- 사용자/환경 API 키 값을 클라이언트 응답에 포함하지 마라. `/api/config`는 키 존재 여부(boolean)만 반환한다. 근거: `server/index.ts:151-152`.
-- API 키를 코드에 하드코딩하지 마라. 서버는 `process.env`(`.env`)에서 읽는다. 근거: `server/index.ts:59-62`.
+- 사용자/환경 API 키 값을 클라이언트 응답에 포함하지 마라. `/api/config`는 키 존재 여부(boolean)만 반환한다. 근거: `server/index.ts:133-134`.
+- API 키를 코드에 하드코딩하지 마라. 서버는 `process.env`(`.env`)에서 읽는다. 근거: `server/index.ts:60-63`.
 - 민감 파일(`.env`, `.env.*`, `*credential*`, `*secret*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ed25519*`, `.npmrc`, `.netrc`, `.aws/`, `.ssh/`, `secrets/`)은 읽기·수정·생성 모두 금지다. `cat`, `type`, `Get-Content` 등 셸 우회도 포함한다. 차단 근거: `.claude/settings.json`의 `permissions.deny`. 이 목록을 바꾸거나 완화하지 마라. 환경변수 설정이 필요하면 사용자에게 직접 하도록 안내하라.
 
 ### Do's & Don'ts
 
-- AI가 생성한 코드는 `react-live`의 `noInline` 모드로 실행되므로 `render(<Component />)` 호출이 필수다. 이 계약을 바꾸면 시스템 프롬프트(`server/index.ts:12`), `ensureRenderCall`(`server/generator.ts:16`), `LivePreview`(`src/components/LivePreview.tsx:11`)를 함께 수정하라. 셋 중 하나만 바꾸면 미리보기가 빈 화면이 된다.
-- 생성 코드는 import 없이 전역 `React`만 사용하는 순수 JavaScript여야 한다 (TypeScript 문법 금지). 근거: `server/index.ts:11,20`. 이 규칙을 완화하지 마라.
-- 백엔드 포트 `3002`는 두 곳에 있다: `server/index.ts:139`, `vite.config.ts:11`. 하나를 바꾸면 반드시 같이 바꿔라.
-- 프론트엔드는 `/api/*` 상대 경로로만 호출한다 (Vite 프록시 경유). 절대 URL을 하드코딩하지 마라. 근거: `src/hooks/useComponentGenerator.ts:23`.
+- AI가 생성한 코드는 `react-live`의 `noInline` 모드로 실행되므로 `render(<Component />)` 호출이 필수다. 이 계약을 바꾸면 시스템 프롬프트(`server/index.ts:13`), `ensureRenderCall`(`server/generator.ts:16`), `LivePreview`(`src/components/LivePreview.tsx:11`)를 함께 수정하라. 셋 중 하나만 바꾸면 미리보기가 빈 화면이 된다.
+- 생성 코드는 import 없이 전역 `React`만 사용하는 순수 JavaScript여야 한다 (TypeScript 문법 금지). 근거: `server/index.ts:12,21`. 이 규칙을 완화하지 마라.
+- 백엔드 포트 `3002`는 두 곳에 있다: `server/index.ts:121`, `vite.config.ts:11`. 하나를 바꾸면 반드시 같이 바꿔라.
+- 프론트엔드는 `/api/*` 상대 경로로만 호출한다 (Vite 프록시 경유). 절대 URL을 하드코딩하지 마라. 근거: `src/hooks/useComponentGenerator.ts:37`.
 
 ## Context Map
 
