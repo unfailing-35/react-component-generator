@@ -18,6 +18,7 @@
 
 - 사용자/환경 API 키 값을 클라이언트 응답에 포함하지 마라. `/api/config`는 키 존재 여부(boolean)만 반환한다. 근거: `server/index.ts:151-152`.
 - API 키를 코드에 하드코딩하지 마라. 서버는 `process.env`(`.env`)에서 읽는다. 근거: `server/index.ts:59-62`.
+- 민감 파일(`.env`, `.env.*`, `*credential*`, `*secret*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ed25519*`, `.npmrc`, `.netrc`, `.aws/`, `.ssh/`, `secrets/`)은 읽기·수정·생성 모두 금지다. `cat`, `type`, `Get-Content` 등 셸 우회도 포함한다. 차단 근거: `.claude/settings.json`의 `permissions.deny`. 이 목록을 바꾸거나 완화하지 마라. 환경변수 설정이 필요하면 사용자에게 직접 하도록 안내하라.
 
 ### Do's & Don'ts
 
