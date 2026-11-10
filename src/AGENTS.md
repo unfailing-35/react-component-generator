@@ -28,7 +28,7 @@ Vite + React 19 프론트엔드. 상태와 `/api/*` 호출은 `App.tsx`와 `hook
 
 ## Local Golden Rules
 
-- API 키는 `App.tsx`의 `useState`에만 보관하고, 서버 전송은 훅의 요청 body로만 한다 (`src/hooks/useComponentGenerator.ts:26`). `localStorage`, 로그, URL 쿼리에 저장하지 마라.
+- API 키는 사용자 요청으로 `localStorage`(`rcg:apiKey`)에 영속화한다 (`src/App.tsx`의 `usePersistentState`). 서버 전송은 훅의 요청 body로만 한다 (`src/hooks/useComponentGenerator.ts`). 로그, URL 쿼리, 쿠키에는 저장하지 마라. 같은 origin의 스크립트가 읽을 수 있으므로 `LivePreview` scope 규칙을 반드시 지켜라.
 - 프로바이더를 바꾸면 입력된 키를 비운다 (`src/App.tsx:41-44`). 다른 회사의 키가 잘못 전송되는 것을 막는 동작이므로 유지하라.
 - 키 입력이 비어 있고 서버에 환경 키도 없으면 요청 전에 막는다 (`src/App.tsx:33-37`). 서버의 400 검사(`server/index.ts`)와 이중 방어이므로 한쪽만 제거하지 마라.
 - `LivePreview`에 `scope`를 추가하지 마라. 미리보기는 AI가 만든 코드를 페이지 안에서 직접 실행하며(`src/components/LivePreview.tsx:11`), 현재는 전역 `React`만 노출한다. API 키나 앱 내부 값을 scope로 넘기면 생성 코드가 접근할 수 있다.
