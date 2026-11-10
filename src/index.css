@@ -1,0 +1,54 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  --desk: #8d9be0;
+  --paper: #ffffff;
+  --chrome: #e6e6ea;
+  --ink: #000000;
+  --muted: #4a4a55;
+  --hi: #ffd23f;
+  --ok: #0a7a4d;
+  --bad: #d6322b;
+  --font-ui: Galmuri14, 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  --font-head: Galmuri11, Galmuri14, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  --font-code: GalmuriMono11, 'D2Coding', Consolas, monospace;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  background-color: var(--desk);
+  background-image:
+    linear-gradient(45deg, rgba(0, 0, 0, 0.1) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.1) 75%),
+    linear-gradient(45deg, rgba(0, 0, 0, 0.1) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.1) 75%);
+  background-size: 4px 4px;
+  background-position:
+    0 0,
+    2px 2px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
