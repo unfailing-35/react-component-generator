@@ -9,6 +9,7 @@ import {
 } from './utils/persistence';
 import { PromptInput } from './components/PromptInput';
 import { ComponentCard } from './components/ComponentCard';
+import { StreamingCard } from './components/StreamingCard';
 import { useComponentGenerator } from './hooks/useComponentGenerator';
 import type { Provider } from './types';
 import './App.css';
@@ -27,8 +28,16 @@ function App() {
     anthropic: false,
     google: false,
   });
-  const { components, isLoading, error, generate, removeComponent, clearAll } =
-    useComponentGenerator();
+  const {
+    components,
+    isLoading,
+    error,
+    streamingCode,
+    streamingPrompt,
+    generate,
+    removeComponent,
+    clearAll,
+  } = useComponentGenerator();
 
   useEffect(() => {
     fetch('/api/config')
@@ -169,21 +178,8 @@ function App() {
           </div>
         )}
 
-        {isLoading && (
-          <div className="window loading-window" role="status">
-            <div className="titlebar">
-              <span>생성 중</span>
-            </div>
-            <div className="window-body">
-              <p>컴포넌트를 생성하고 있습니다...</p>
-              <div className="progress" aria-hidden="true">
-                <div className="progress-bar" />
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="results-grid">
+          {isLoading && <StreamingCard prompt={streamingPrompt} code={streamingCode} />}
           {components.map((component) => (
             <ComponentCard
               key={component.id}

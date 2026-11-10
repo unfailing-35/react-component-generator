@@ -1,5 +1,89 @@
 {
   "worktree": {
     "baseRef": "head"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$CLAUDE_PROJECT_DIR/.claude/hooks/tdd-reminder.ts\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$CLAUDE_PROJECT_DIR/.claude/hooks/require-tests-before-commit.ts\"",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Read(**/id_rsa*)",
+      "Read(**/id_ed25519*)",
+      "Read(**/*credential*)",
+      "Read(**/*secret*)",
+      "Read(**/.npmrc)",
+      "Read(**/.netrc)",
+      "Read(**/.aws/**)",
+      "Read(**/.ssh/**)",
+      "Read(**/secrets/**)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Edit(**/*.pem)",
+      "Edit(**/*.key)",
+      "Edit(**/*.p12)",
+      "Edit(**/*.pfx)",
+      "Edit(**/id_rsa*)",
+      "Edit(**/id_ed25519*)",
+      "Edit(**/*credential*)",
+      "Edit(**/*secret*)",
+      "Edit(**/.npmrc)",
+      "Edit(**/.netrc)",
+      "Edit(**/.aws/**)",
+      "Edit(**/.ssh/**)",
+      "Edit(**/secrets/**)",
+      "Write(**/.env)",
+      "Write(**/.env.*)",
+      "Write(**/*.pem)",
+      "Write(**/*.key)",
+      "Write(**/*.p12)",
+      "Write(**/*.pfx)",
+      "Write(**/id_rsa*)",
+      "Write(**/id_ed25519*)",
+      "Write(**/*credential*)",
+      "Write(**/*secret*)",
+      "Write(**/.npmrc)",
+      "Write(**/.netrc)",
+      "Write(**/.aws/**)",
+      "Write(**/.ssh/**)",
+      "Write(**/secrets/**)",
+      "Bash(*.env*)",
+      "Bash(*credential*)",
+      "Bash(*secret*)",
+      "Bash(*.pem*)",
+      "Bash(*id_rsa*)",
+      "Bash(*id_ed25519*)",
+      "PowerShell(*.env*)",
+      "PowerShell(*credential*)",
+      "PowerShell(*secret*)",
+      "PowerShell(*.pem*)",
+      "PowerShell(*id_rsa*)",
+      "PowerShell(*id_ed25519*)"
+    ]
   }
 }

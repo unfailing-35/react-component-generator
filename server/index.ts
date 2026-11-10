@@ -1,5 +1,6 @@
-import { stripCodeFences, ensureRenderCall } from './generator';
 import { withModelFallback } from './fallback';
+import { anthropicDelta, googleDelta } from './sse';
+import { relayStream } from './streaming';
 
 // 우선순위 순서. 앞 모델이 실패하면 다음 모델로 폴백한다.
 const GOOGLE_MODELS = ['gemini-3.1-flash-lite', 'gemini-3.5-flash'];
@@ -65,7 +66,9 @@ function resolveApiKey(provider: Provider, clientKey?: string): string | null {
   return clientKey || ENV_KEYS[provider] || null;
 }
 
-async function callAnthropic(prompt: string, apiKey: string): Promise<string> {
+type UpstreamStream = { body: ReadableStream<Uint8Array>; extractDelta: (payload: string) => string };
+
+async function callAnthropic(prompt: string, apiKey: string): Promise<UpstreamStream> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -76,27 +79,21 @@ async function callAnthropic(prompt: string, apiKey: string): Promise<string> {
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 4096,
+      stream: true,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
 
-  if (!response.ok) {
+  if (!response.ok || !response.body) {
     throw new Error(`Claude API error: ${response.status}`);
   }
 
-  const data = (await response.json()) as {
-    content: Array<{ type: string; text?: string }>;
-  };
-
-  return data.content
-    .filter((block) => block.type === 'text')
-    .map((block) => block.text)
-    .join('');
+  return { body: response.body, extractDelta: anthropicDelta };
 }
 
-async function callGoogleModel(prompt: string, apiKey: string, model: string): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+async function callGoogleModel(prompt: string, apiKey: string, model: string): Promise<UpstreamStream> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -108,30 +105,15 @@ async function callGoogleModel(prompt: string, apiKey: string, model: string): P
     }),
   });
 
-  if (!response.ok) {
+  if (!response.ok || !response.body) {
     throw new Error(`Gemini API error: ${response.status}`);
   }
 
-  const data = (await response.json()) as {
-    candidates: Array<{
-      content: { parts: Array<{ text?: string }> };
-      finishReason?: string;
-    }>;
-  };
-
-  const candidate = data.candidates?.[0];
-  if (candidate?.finishReason === 'MAX_TOKENS') {
-    throw new Error('생성된 코드가 너무 길어 잘렸습니다. 더 간단한 컴포넌트를 요청해주세요.');
-  }
-
-  return (
-    candidate?.content?.parts
-      ?.map((part) => part.text)
-      ?.join('') ?? ''
-  );
+  // MAX_TOKENS 절단 검사는 googleDelta가 담당한다.
+  return { body: response.body, extractDelta: googleDelta };
 }
 
-async function callGoogle(prompt: string, apiKey: string): Promise<string> {
+async function callGoogle(prompt: string, apiKey: string): Promise<UpstreamStream> {
   return withModelFallback(GOOGLE_MODELS, (model) => callGoogleModel(prompt, apiKey, model));
 }
 
@@ -180,14 +162,31 @@ const server = Bun.serve({
           );
         }
 
-        const text =
+        // 업스트림 연결 실패(503/429 등)는 스트림 시작 전에 던져져 아래 catch에서 JSON 에러로 변환된다.
+        const upstream =
           provider === 'google'
             ? await callGoogle(prompt, resolvedKey)
             : await callAnthropic(prompt, resolvedKey);
 
-        const code = ensureRenderCall(stripCodeFences(text));
+        const encoder = new TextEncoder();
+        const events = relayStream(upstream.body, upstream.extractDelta);
+        const stream = new ReadableStream<Uint8Array>({
+          async pull(controller) {
+            const { done, value } = await events.next();
+            if (done) {
+              controller.close();
+              return;
+            }
+            controller.enqueue(encoder.encode(`${JSON.stringify(value)}\n`));
+          },
+          cancel() {
+            void events.return(undefined);
+          },
+        });
 
-        return Response.json({ code }, { headers: CORS_HEADERS });
+        return new Response(stream, {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-cache' },
+        });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
 
