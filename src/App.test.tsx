@@ -12,10 +12,23 @@ beforeEach(() => {
       if (url === '/api/config') {
         return { ok: true, json: async () => ({ envKeys: { anthropic: false, google: false } }) };
       }
-      return { ok: true, json: async () => ({ code: 'render(<p />)' }) };
+      return { ok: true, body: ndjsonBody(streamEvents) };
     }),
   );
 });
+
+let streamEvents: object[] = [{ type: 'done', code: 'render(<p />)' }];
+
+function ndjsonBody(events: object[], holdOpen?: Promise<void>) {
+  const encoder = new TextEncoder();
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      for (const event of events) controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+      if (holdOpen) await holdOpen;
+      controller.close();
+    },
+  });
+}
 
 const providerSelect = () => screen.getByLabelText('AI 제공자');
 const apiKeyInput = () => screen.getByLabelText('API 키');
@@ -73,6 +86,46 @@ describe('App 영속화', () => {
     );
     render(<App />);
     expect(screen.getByText('생성한 컴포넌트: 1개')).toBeInTheDocument();
+  });
+});
+
+describe('App 스트리밍 UX', () => {
+  const generateOnce = async () => {
+    localStorage.setItem(STORAGE_KEYS.apiKey, JSON.stringify('AIza-saved'));
+    const user = userEvent.setup();
+    render(<App />);
+    await user.type(screen.getByRole('textbox', { name: '프롬프트' }), '새 카드');
+    await user.click(screen.getByRole('button', { name: '컴포넌트 생성' }));
+  };
+
+  it('생성 중에는 코드 탭에 스트리밍되는 코드를 보여준다', async () => {
+    let release!: () => void;
+    const hold = new Promise<void>((resolve) => (release = resolve));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        url === '/api/config'
+          ? { ok: true, json: async () => ({ envKeys: { anthropic: false, google: false } }) }
+          : { ok: true, body: ndjsonBody([{ type: 'delta', text: 'const Card = 1;' }], hold) },
+      ),
+    );
+
+    await generateOnce();
+
+    expect(await screen.findByText('const Card = 1;')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '코드' })).toHaveAttribute('aria-selected', 'true');
+    release();
+  });
+
+  it('생성이 끝나면 미리보기 탭으로 전환된다', async () => {
+    streamEvents = [{ type: 'delta', text: 'raw' }, { type: 'done', code: 'render(<p />)' }];
+
+    await generateOnce();
+
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: '미리보기' })).toHaveAttribute('aria-selected', 'true'),
+    );
+    expect(screen.getByRole('tab', { name: '미리보기' })).toBeEnabled();
   });
 });
 

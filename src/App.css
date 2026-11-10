@@ -565,6 +565,40 @@
   background: var(--hi);
 }
 
+/* ---------- 스트리밍 ---------- */
+
+.streaming-card .code-block {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.stream-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: #f2f2f2;
+  animation: stream-blink 1s steps(1) infinite;
+}
+
+.stream-waiting {
+  margin: 0;
+  padding: 22px;
+}
+
+@keyframes stream-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stream-cursor {
+    animation: none;
+  }
+}
+
 /* ---------- 반응형 ---------- */
 
 @media (max-width: 1000px) {
@@ -633,3 +667,26 @@
     animation: none;
   }
 }
+
+.stream-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: #f2f2f2;
+  animation: stream-blink 1s steps(1) infinite;
+}
+
+.stream-waiting {
+  margin: 0;
+  padding: 22px;
+}
+
+.streaming-card .code-block {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+@keyframes stream-blink {
+  50
