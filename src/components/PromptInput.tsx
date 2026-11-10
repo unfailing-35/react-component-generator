@@ -4,6 +4,7 @@ import { validatePrompt, MAX_PROMPT_LENGTH } from '../utils/validatePrompt';
 interface PromptInputProps {
   onGenerate: (prompt: string) => void;
   isLoading: boolean;
+  history?: string[];
 }
 
 const EXAMPLES = [
@@ -15,7 +16,7 @@ const EXAMPLES = [
   '테이블 행 상세보기 패널. 선택한 고객의 기본 정보와 최근 활동 표시',
 ];
 
-export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
+export function PromptInput({ onGenerate, isLoading, history = [] }: PromptInputProps) {
   const [prompt, setPrompt] = useState('');
   const validation = validatePrompt(prompt);
 
@@ -38,6 +39,7 @@ export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
       </div>
       <form onSubmit={handleSubmit} className="prompt-form">
         <textarea
+          aria-label="프롬프트"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="예: 고객 목록 테이블 위에 들어갈 검색 필터 바를 만들어줘. 상태, 담당자, 날짜 범위 필터가 필요해."
@@ -73,6 +75,21 @@ export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
           )}
         </button>
       </form>
+      {history.length > 0 && (
+        <fieldset className="prompt-examples">
+          <legend>최근 프롬프트</legend>
+          {history.map((item) => (
+            <button
+              key={item}
+              className="example-chip"
+              onClick={() => handleExampleClick(item)}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </fieldset>
+      )}
       <fieldset className="prompt-examples">
         <legend>예시 프롬프트</legend>
         {EXAMPLES.map((example) => (
